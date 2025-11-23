@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewpoint" content="width=device-width, initial-scale=1.0">
+    <title>Your Reflection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            color: #fff;
+            transition: background 0.6s ease;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            padding: 60px 20px;
+        }
+        .emoji {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        .message {
+            font-size: 22px;
+            font-weight: 500;
+            margin-bottom: 30px;
+        }
+        a {
+            display: inline-block;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 5px;
+            transition: 0.3s;
+        }
+        a:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body id="pageBody">
+    
+    <div class="container">
+        <div class="emoji" id="emojiDisplay"></div>
+        <div class="message">{{ message }}</div>
+        <a href="/">Go Back Home</a>
+        <a href="/history">View Mood History</a>
+    </div>
+
+    <script>
+        
+        const mood = "{{ mood }}";
+
+        const moodStyles = {
+            happy: { color: "linear-gradient(135deg, #FFD54F, #FFB300)", emoji: "😄" },
+            calm: { color: "linear-gradient(135deg, #A8E6CF, #56AB91)", emoji: "😌" },
+            anxious: { color: "linear-gradient(135deg, #B2EBF2, #00ACC1)", emoji: "😰" },
+            sad: { color: "linear-gradient(135deg, #90CAF9, #1976D2)", emoji: "😞" },
+            motivated: { color: "linear-gradient(135deg, #FF7043, #D84315)", emoji: "💪" },
+            tired: { color: "linear-gradient(135deg, #B0BEC5, #607D8B)", emoji: "😴" },
+            grateful: { color: "linear-gradient(135deg, #AED581, #7CB342)", emoji: "🙏" },
+            angry: { color: "linear-gradient(135deg, #EF5350, #C62828)", emoji: "😡" },
+            confident: { color: "linear-gradient(135deg, #957CD, #512DA8)", emoji: "😎" }
+        };
+
+        const page = document.getElementById("pageBody");
+        const emoji = document.getElementById("emojiDisplay");
+
+        if (moodStyles[mood]) {
+            page.style.background = moodStyles[mood].color;
+            emoji.textContent = moodStyles[mood].emoji;
+        } else {
+            page.style.background = "linear-gradient(135deg, #b0bec5, #78909c)";
+            emoji.textContent = "🌈";
+        }
+    </script>
+
+<script>
+const themeToggle = document.getElementById("themeToggle");
+
+document.body.classList.toggle("dark-mode", localStorage.getItem("theme") === "dark");
+
+themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    
+    localStorage.setItem("theme",
+        document.body.classList.contains("dark-mode") ? "dark" : "light"
+    );
+});
+</script>
+
+
+</body>
+</html>

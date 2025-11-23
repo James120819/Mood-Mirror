@@ -1,0 +1,221 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood History</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #c3ecf7, #f6d1f8);
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .history-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(6px);
+        }
+
+        h1, h2 {
+            color: #5a4fcf;
+            text-align: center;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            text-align: center;
+        }
+
+        li {
+            margin: 8px 0;
+            color: #333;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            color: #5a4fcf;
+            margin-top: 20px;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        canvas {
+            display: block;
+            margin: 25px auto;
+            max-width: 100%;
+        }
+
+        .clear-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #ff6b6b;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .clear-btn:hover {
+            background-color: #ff4b4b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="history-container">
+        <h1>Your Mood History</h1>
+
+        {% if history %}
+            <ul id="historyList">
+                {% for mood, time, reflection in history %}
+                <li>
+                    <strong>{{ mood.capitalize() }}</strong> – {{ time }}<br>
+                    {% if reflection %}
+                        <em>{{ reflection }}</em>
+                    {% else %}
+                        <em>No reflection added.</em>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <h2>Mood Summary Chart</h2>
+            <canvas id="moodChart"></canvas>
+
+            <button onclick="clearHistory()" class="clear-btn">Clear History</button>
+
+        {% else %}
+            <p style="text-align:center;">No moods logged yet! Try recording one.</p>
+        {% endif %}
+        
+        <a href="/search" class="link">Search Mood History</a>
+        <br>
+        <a href="/" class="link">Back to Home</a>
+    </div>
+
+    <!-- JSON DATA EMBED -->
+    <script id="history-data" type="application/json">
+        {{ history | tojson }}
+    </script>
+
+    <script>
+    let chartInstance = null;
+
+    // -----------------------------------------------------------
+    // LOAD & DRAW CHART
+    // -----------------------------------------------------------
+    function loadChartData() {
+        const historyData = JSON.parse(document.getElementById("history-data").textContent || "[]");
+
+        // No chart if empty history
+        if (!historyData.length) {
+            if (chartInstance) chartInstance.destroy();
+            return;
+        }
+
+        const moodOrder = [
+            "happy", "calm", "anxious", "sad",
+            "motivated", "tired", "grateful", "angry", "confident"
+        ];
+
+        const moodCounts = {
+            happy: 0, calm: 0, anxious: 0, sad: 0,
+            motivated: 0, tired: 0, grateful: 0, angry: 0, confident: 0
+        };
+
+        historyData.forEach(entry => {
+            let mood = entry[0];
+            if (moodCounts[mood] !== undefined) {
+                moodCounts[mood]++;
+            }
+        });
+
+        // Destroy old chart before creating a new one
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        const ctx = document.getElementById('moodChart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: moodOrder,
+                datasets: [{
+                    label: 'Mood Frequency',
+                    data: moodOrder.map(m => moodCounts[m]),
+                    backgroundColor: [
+                        '#6a11cb', '#2575fc', '#f6d1f8', '#c3ecf7',
+                        '#5a4fcf', '#ffb3b3', '#a2e5c1', '#ff6961', '#ffe28a'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true },
+                }
+            }
+        });
+    }
+
+    
+    // CLEAR HISTORY FUNCTION 
+    function clearHistory() {
+        if (!confirm("Are you sure you want to clear all mood history?")) return;
+
+        fetch('/clear_history', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                alert("Mood history cleared!");
+
+                // Remove list
+                const list = document.getElementById("historyList");
+                if (list) list.innerHTML = "";
+
+                // Remove chart
+                if (chartInstance) {
+                    chartInstance.destroy();
+                    chartInstance = null;
+                }
+
+                // Remove canvas entirely
+                const canvas = document.getElementById("moodChart");
+                if (canvas) canvas.remove();
+
+                // Replace content with "No moods logged"
+                const container = document.querySelector(".history-container");
+                container.innerHTML = `
+                    <h1>Your Mood History</h1>
+                    <p style="text-align:center;">No moods logged yet! Try recording one.</p>
+                    <a href="/" class="link">Back to Home</a>
+                `;
+            })
+            .catch(err => console.error("Error clearing history:", err));
+    }
+
+    loadChartData();
+    </script>
+
+</body>
+</html>

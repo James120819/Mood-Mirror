@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Seach Mood History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="history-container">
+        <h1>Search Your Mood History</h1>
+
+        <form method="GET" action="/search">
+            <input type="text" name="q" placeholder="Search moods or reflections." style="padding:10px; width:80%; border-radius:8px;">
+            <button type="submit" class="mood-btn">Search</button>
+        </form>
+
+        <br>
+
+        {% if results %}
+            <h2>Results:</h2>
+            <ul>
+                {% for mood, time, reflection in results %}
+                    <li>
+                        <strong>{{ mood.capitalize() }}</strong> - {{ time }}<br>
+                        {% if reflection %}
+                            <em>{{ reflection }}</em>
+                        {% else %}
+                            <em>No reflection added.</em>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% elif query %}
+            <p>No results found for "<strong>{{ query }}</strong>".</p>
+        {% endif %}
+
+        <br>
+        <a href="/" class="link">Back to Home</a>
+    </div>
+</body>
+</html>

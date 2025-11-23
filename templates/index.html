@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Mood + Wellness Companion</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #a18cd1, #fdc2ed);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding-top: 40px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 6px;
+            border: none;
+            font-size: 16px;
+        }
+        button {
+            background-color: #6a11cb;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2575fc;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <h2 class="app-title"> 🪞 Mood Mirror 🪞</h2>
+    </div>
+
+    <div class="container">
+    
+    
+    
+        <h1>How are you feeling today?</h1>
+        <form method="POST" action="/mood">
+            <select name="mood">
+                <option value="happy"> Happy</option>
+                <option value="calm"> Calm</option>
+                <option value="anxious"> Anxious</option>
+                <option value="sad"> Sad</option>
+                <option value="motivated"> Motivated</option>
+                <option value="tired">Tired</option>
+                <option value="grateful">Grateful</option>
+                <option value="angry">Angry</option>
+                <option value="confident">Confident</option>
+            </select>
+
+            <label for="reflection">Write a short reflection (optional):</label><br>
+            <textarea id="reflection" name="reflection" rows="3" cols="35"
+                placeholder="What's on your mind today?"></textarea>
+            <br><br>
+
+
+            <button type="submit">Submit</button>
+            </form>
+
+    <div class="nav-buttons">
+        <a href="/about" class="nav-btn">🧠 About This App</a>
+        <a href="/search" class="nav-btn">🔍 Search History</a>
+        <a href="/export" class="nav-btn">⬇️ Export History</a>
+    </div>
+
+
+</body>
+</html>
