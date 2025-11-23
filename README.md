@@ -32,7 +32,7 @@ Mood Mirror/
     ─ search.html        # Search tool
     ─ about.html         # About the app
 ---
-── mood_data.json         # App-generated mood storage
+── mood_data.json         # App generated mood storage
 ─ README.md              # Project documentation
 
 How To Run This App
