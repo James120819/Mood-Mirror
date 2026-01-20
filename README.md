@@ -9,13 +9,16 @@ Features
 - Export to JSON: Download your entire history anytime.
 - Mobile-Responsive UI: Works smoothly on desktop and mobile.
 - Soft Gradient UI Theme: Calming, minimalist wellness design.
+- SQLite / SQL database for mood history 
 
 
 
  Tech Stack
-Backend: Python/Flask
-Frontend: HTML5, CSS3
-Storage: JSON files (mood_data.json, exported data)
+Backend: Python (Flask)
+Frontend: HTML5, CSS3, Javascript
+Database: SQLite (mood_mirror.db)
+Data Export: JSON files (downloadable mood history export)
+Visualization: Chart.js
 Additional Tools: VS Code, Git, GitHub
 
 Project Structure
@@ -32,7 +35,6 @@ Mood Mirror/
     ─ search.html        # Search tool
     ─ about.html         # About the app
 ---
-── mood_data.json         # App generated mood storage
 ─ README.md              # Project documentation
 
 How To Run This App
