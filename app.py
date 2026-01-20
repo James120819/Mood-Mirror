@@ -1,50 +1,86 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, send_file
 import json
 import os
 from datetime import datetime
 import random
-
-
-DATA_FILE = "mood_data.json"
-
-def load_history():
-    """Load mood data safely."""
-    if not os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "w") as f:
-            json.dump([], f)
-
-    try:
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-            if isinstance(data, list):
-                return data
-            else:
-                return []
-    except json.JSONDecodeError:
-        print("Error loading mood data - resetting to empty list.")
-        with open(DATA_FILE, "w") as f:
-            json.dump([], f)
-        return []
-    
-
-def save_history(data):
-    """Save mood data safely."""
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-
+import sqlite3
 
 app = Flask(__name__)
 
 app.secret_key = "supersecretkey123"
 
+DB_FILE = "mood_mirror.db"
+def get_db_connection():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
+def init_db():
+    conn = get_db_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS mood_entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            mood TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            reflection TEXT DEFAULT ""
+        )
+    """)
+    conn.commit()
+    conn.close()
+init_db()
+
+#  Data Functions 
+
+def insert_entry(mood, timestamp, reflection):
+    conn = get_db_connection()
+    conn.execute(
+        "INSERT INTO mood_entries (mood, timestamp, reflection) VALUES (?, ?, ?)",
+        (mood, timestamp, reflection or "")
+    )
+    conn.commit()
+    conn.close()
+
+def load_history():
+    """Return history in the same format your app already expects:
+    [[mood, timestamp, reflection], ...]
+    """
+    conn = get_db_connection()
+    rows = conn.execute(
+        "SELECT mood, timestamp, reflection FROM mood_entries ORDER BY id ASC"
+    ).fetchall()
+    conn.close()
+    return [[r["mood"], r["timestamp"], r["reflection"]] for r in rows]
+
+def clear_history_sql():
+    conn = get_db_connection()
+    conn.execute("DELETE FROM mood_entries")
+    conn.commit()
+    conn.close()
+
+def search_history_sql(query):
+    q = f"%{query.lower()}%"
+    conn = get_db_connection()
+    rows = conn.execute(
+        """
+        SELECT mood, timestamp, reflection
+        FROM mood_entries
+        WHERE LOWER(mood) LIKE ? OR LOWER(reflection) LIKE ?
+        ORDER BY id ASC
+        """,
+        (q, q)
+    ).fetchall()
+    conn.close()
+    return [(r["mood"], r["timestamp"], r["reflection"]) for r in rows]
+
+#  Routes
+
 @app.route('/')
 def home():
     return render_template('index.html')
-
 @app.route('/mood', methods=['POST'])
 def mood():
     mood = request.form.get('mood')
     reflection = request.form.get('reflection', '')
+    #  Personality responses 
     response = {
         "happy": [
             "That's awesome! Keep smiling. You are incredible.",
@@ -56,7 +92,7 @@ def mood():
             "Embrace your peace and enjoy the moment. Your peace is powerful.",
             "Stillness looks great on you. Take a deep breath and give yourself the love you deserve.",
             "You're centered and composed. Keep protecting that peace.",
-            "Peace ia your superpower today."
+            "Peace is your superpower today."
         ],
         "anxious": [
             "You are human. It's okay to feel how you are feeling.",
@@ -100,14 +136,10 @@ def mood():
             "You've got everything you need within you.",
             "Walk like you already are who you are meant to be. This is your story and your moment."
         ]
-
     }
-
-    history = load_history()
     timestamp = datetime.now().strftime("%I:%M %p")
-    history.append([mood, timestamp, reflection])
-    save_history(history)
-
+    # 
+    insert_entry(mood, timestamp, reflection)
     message = random.choice(response.get(mood, ["Thank you for sharing."]))
     return render_template('result.html', message=message, mood=mood)
 
@@ -117,10 +149,9 @@ def history_data():
     data = load_history()
     return json.dumps(data)
 
-
 @app.route('/history')
 def history():
-    data = load_history() 
+    data = load_history()
     fixed = []
     for entry in data:
         if isinstance(entry, list):
@@ -128,16 +159,15 @@ def history():
                 mood, timestamp, reflection = entry
             elif len(entry) == 2:
                 mood, timestamp = entry
-                refelction = ""
+                reflection = ""
             else:
                 continue
             fixed.append((mood, timestamp, reflection))
-    
     return render_template('history.html', history=fixed)
 
 @app.route('/clear_history', methods=['POST'])
 def clear_history():
-    save_history([])
+    clear_history_sql()
     return ("OK", 200)
 
 @app.route("/about")
@@ -146,32 +176,21 @@ def about():
 
 @app.route("/search")
 def search():
-    query = request.args.get("q", "").lower()
-
-    history = load_history()
-
+    query = request.args.get("q", "").lower().strip()
     results = []
-    for mood, time, reflection in history:
-        if query in mood.lower() or query in reflection.lower():
-            results.append((mood, time, reflection))
+    if query:
+        results = search_history_sql(query)
     return render_template("search.html", results=results, query=query)
-
-from flask import send_file
 
 @app.route("/export")
 def export_history():
     """Download mood history as a JSON file."""
-
     history = load_history()
-
     export_filename = "mood_export.json"
-
     with open(export_filename, "w") as f:
         json.dump(history, f, indent=4)
-
     return send_file(export_filename, as_attachment=True)
-    
+
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
